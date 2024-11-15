@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  // State to store uploaded images and diagnosis results
+  const [images, setImages] = useState([]);
+  const [results, setResults] = useState([]);
+
+  // Handle image file selection
+  const handleImageUpload = (event) => {
+    const files = Array.from(event.target.files);
+    setImages(files);
+  };
+
+  // Function to send images to the backend for diagnosis
+  const handleDiagnose = async () => {
+    const diagnoses = await Promise.all(images.map(async (image) => {
+      const formData = new FormData();
+      formData.append("file", image);
+
+      const response = await fetch("https://your-backend.com/detect_diabetes", {
+        method: "POST",
+        body: formData
+      });
+      return await response.json();
+    }));
+    setResults(diagnoses);
+  };
 
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <h1>Diabetes Detection from Eye Images</h1>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      
+      <div className="uploader">
+        <input type="file" multiple onChange={handleImageUpload} />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <button onClick={handleDiagnose}>Diagnose Images</button>
+
+      <div className="results">
+        <h2>Diagnosis Results</h2>
+        {results.map((result, index) => (
+          <div key={index}>
+            <p>Image {index + 1}:</p>
+            <p>Diabetes Detected: {result.diabetes_detected ? "Yes" : "No"}</p>
+            <p>Confidence: {result.confidence}</p>
+          </div>
+        ))}
+      </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
